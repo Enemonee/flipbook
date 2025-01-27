@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flipbook Viewer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    #pdf-container {
+      margin: 20px auto;
+      width: 80%;
+      height: 600px;
+      position: relative;
+      border: 1px solid #ccc;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+    }
+    .controls {
+      margin: 10px 0;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>PDF Flipbook</h1>
+  <div id="pdf-container">
+    <canvas id="pdf-canvas"></canvas>
+  </div>
+  <div class="controls">
+    <button id="prev-page">Previous</button>
+    <span id="page-info">Page 1</span>
+    <button id="next-page">Next</button>
+  </div>
+
+  <script>
+    const pdfUrl = "https://drive.google.com/uc?export=download&id=1Rq3yxCoSRxmk1GLPnUMXRKLG5M3CQzpw"; // Correct direct PDF link
+
+    let pdfDoc = null,
+        currentPage = 1,
+        totalPages = 0,
+        isRendering = false,
+        canvas = document.getElementById("pdf-canvas"),
+        ctx = canvas.getContext("2d");
+
+    const renderPage = (pageNum) => {
+      isRendering = true;
+
+      pdfDoc.getPage(pageNum).then((page) => {
+        const viewport = page.getViewport({ scale: 1.5 });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        const renderContext = {
+          canvasContext: ctx,
+          viewport: viewport,
+        };
+
+        page.render(renderContext).promise.then(() => {
+          isRendering = false;
+          document.getElementById("page-info").textContent = `Page ${currentPage} of ${totalPages}`;
+        });
+      });
+    };
+
+    const loadPDF = (url) => {
+      pdfjsLib.getDocument(url).promise.then((pdf) => {
+        pdfDoc = pdf;
+        totalPages = pdf.numPages;
+        renderPage(currentPage);
+      });
+    };
+
+    document.getElementById("prev-page").addEventListener("click", () => {
+      if (currentPage > 1 && !isRendering) {
+        currentPage--;
+        renderPage(currentPage);
+      }
+    });
+
+    document.getElementById("next-page").addEventListener("click", () => {
+      if (currentPage < totalPages && !isRendering) {
+        currentPage++;
+        renderPage(currentPage);
+      }
+    });
+
+    loadPDF(pdfUrl);
+  </script>
+</body>
+</html>
